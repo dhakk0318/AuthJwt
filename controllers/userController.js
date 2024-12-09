@@ -23,11 +23,31 @@ const bcrypt = require('bcrypt');
   return { accessToken, refreshToken };
 };
 
- exports.register = async (req, res) => {
+//  exports.register = async (req, res) => {
+//   try {
+//     const { username, email, password } = req.body;
+//     const newUser = await User.create({ username, email, password });
+
+//     res.status(201).json({ user: newUser, message: 'Registration successful' });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Registration failed', error });
+//   }
+// };
+
+exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    const newUser = await User.create({ username, email, password });
+    
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email is already registered.' });
+    }
 
+    const newUser = await User.create({ username, email, password });
+    const tokens = generateTokens(newUser);
+    setAuthCookies(res, tokens);
     res.status(201).json({ user: newUser, message: 'Registration successful' });
   } catch (error) {
     console.error(error);
